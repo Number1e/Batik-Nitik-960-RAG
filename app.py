@@ -24,7 +24,7 @@ CLIP_MODEL_ID = "openai/clip-vit-base-patch32"
 BLIP_MODEL_ID = "Salesforce/blip-image-captioning-base" 
 TOP_K = 3 
 # Ganti dengan API Key Anda yang aman
-GROQ_API_KEY = "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" 
+GROQ_API_KEY = "fill it by yourself" 
 
 # =============================================================================
 # FUNGSI BACKEND & AI (TIDAK DIUBAH - COPY DARI KODE LAMA ANDA)
