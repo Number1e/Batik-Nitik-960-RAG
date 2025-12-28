@@ -8,7 +8,7 @@ from PIL import Image
 from transformers import CLIPProcessor, CLIPModel
 
 # Konfigurasi
-DATASET_PATH = r"C:\Semester 7\Kelompok TKC\Project-RAG-Nitik-Batik-960-main\Batik Nitik 960 Images"
+DATASET_PATH = r"C:\Semester 7\Kelompok TKC\Project-RAG-Nitik-Batik-960-main\Batik Nitik 960 Images" # sesuaikan dengan konfigurasi file
 INDEX_FILE = "batik_faiss.index"
 PATHS_FILE = "image_paths.pkl"
 MODEL_ID = "openai/clip-vit-base-patch32"
@@ -22,7 +22,7 @@ def create_index():
     embeddings = []
     
     print(f"Mulai scanning folder: {DATASET_PATH}")
-    # Scanning dataset (Asumsi struktur: Dataset/NamaKelas/gambar.jpg)
+    # Scanning dataset
     for root, dirs, files in os.walk(DATASET_PATH):
         for file in files:
             if file.lower().endswith(('.png', '.jpg', '.jpeg')):
@@ -35,7 +35,6 @@ def create_index():
 
     print(f"Ditemukan {len(image_paths)} gambar. Mulai ekstraksi fitur...")
     
-    # Proses batching agar RAM tidak penuh
     batch_size = 32
     for i in range(0, len(image_paths), batch_size):
         batch_paths = image_paths[i:i+batch_size]
@@ -55,9 +54,8 @@ def create_index():
     # Gabungkan semua embedding
     embeddings = np.vstack(embeddings).astype('float32')
     
-    # Buat Index FAISS (Inner Product untuk vektor ternormalisasi = Cosine Similarity)
-    # Rumus Cosine Similarity: $$ \text{similarity} = \frac{A \cdot B}{||A|| ||B||} $$
-    d = embeddings.shape[1] # Dimensi vektor (512 untuk ViT-Base)
+    # Buat Index FAISS 
+    d = embeddings.shape[1]
     index = faiss.IndexFlatIP(d) 
     index.add(embeddings)
     
