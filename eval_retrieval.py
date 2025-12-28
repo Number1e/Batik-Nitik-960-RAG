@@ -5,10 +5,8 @@ import numpy as np
 import os
 import random
 from pathlib import Path
-from tqdm import tqdm  # Library untuk progress bar (pip install tqdm)
+from tqdm import tqdm
 
-# Import logika penamaan kelas dari app.py (atau copy paste fungsi extract_class_name baru)
-# Agar konsisten, kita tulis ulang fungsi cleaning-nya di sini
 from data_metadata import BATIK_METADATA
 
 # ==========================================
@@ -16,8 +14,8 @@ from data_metadata import BATIK_METADATA
 # ==========================================
 INDEX_FILE = "batik_faiss.index"
 PATHS_FILE = "image_paths.pkl"
-K_VALUES = [1, 3, 5]  # Kita akan ukur P@1, P@3, dan P@5
-SAMPLE_SIZE = 100     # Jumlah gambar yang akan dites (semakin banyak semakin akurat, tapi lama)
+K_VALUES = [1, 3, 5]  
+SAMPLE_SIZE = 100    
 
 # ==========================================
 # FUNGSI BANTU
@@ -45,11 +43,6 @@ def load_resources():
     index = faiss.read_index(INDEX_FILE)
     with open(PATHS_FILE, "rb") as f:
         image_paths = pickle.load(f)
-    
-    # Reconstruct embeddings (FAISS index IP menyimpan vektornya)
-    # Note: Ini trik untuk mengambil vektor balik dari IndexFlatIP
-    # Jika error, kita harus load model CLIP lagi (tapi itu lambat).
-    # Untuk IndexFlatIP, kita bisa reconstruct.
     try:
         dataset_embeddings = index.reconstruct_n(0, index.ntotal)
         return index, image_paths, dataset_embeddings
@@ -64,8 +57,6 @@ def evaluate():
     index, image_paths, embeddings = load_resources()
     total_images = len(image_paths)
     
-    # Ambil sampel random untuk testing
-    # (Atau gunakan semua data jika kuat menunggu)
     test_indices = random.sample(range(total_images), min(SAMPLE_SIZE, total_images))
     
     print(f"🚀 Memulai Evaluasi pada {len(test_indices)} sampel gambar...")
@@ -76,17 +67,14 @@ def evaluate():
     precision_scores = {k: [] for k in K_VALUES}
 
     for idx in tqdm(test_indices, desc="Evaluasi Berjalan"):
-        # 1. Tentukan Ground Truth (Kelas Sebenarnya)
+        # 1. Tentukan Ground Truth
         query_path = image_paths[idx]
         true_class = extract_class_name_eval(query_path)
         
-        # 2. Ambil Vektor Query (Kita pakai vektor yang sudah ada di index untuk hemat waktu)
-        # Dalam skenario nyata, ini harusnya gambar baru yang di-encode CLIP.
-        # Tapi untuk Self-Evaluation dataset, ini valid.
+        # 2. Ambil Vektor Query
         query_vec = embeddings[idx].reshape(1, -1)
         
-        # 3. Lakukan Pencarian (Retrieval)
-        # Cari max K tertinggi (misal K=5) + 1 (karena hasil ke-1 pasti dirinya sendiri)
+        # 3. Lakukan Pencarian
         max_k = max(K_VALUES) + 1 
         distances, indices = index.search(query_vec, max_k)
         
@@ -106,7 +94,6 @@ def evaluate():
                 res_path = image_paths[res_idx]
                 pred_class = extract_class_name_eval(res_path)
                 
-                # Cek Relevansi: Apakah Kelas Hasil == Kelas Query?
                 if pred_class == true_class:
                     relevant_count += 1
             
@@ -133,4 +120,5 @@ def evaluate():
     print("- P@3 : Seberapa banyak hasil benar dalam 3 rekomendasi.")
 
 if __name__ == "__main__":
+
     evaluate()
